@@ -85,11 +85,18 @@ class MongoDBBaseStore(BaseStore):
     def __init__(
         self,
         mongo_url: str,
-        db_name: str = "checkpointing_db",
-        collection_name: str = "store",
+        db_name: str = None,
+        collection_name: str = None,
         ttl_support: bool = False,
         index_config: Optional[Dict[str, Any]] = None,
     ):
+        # Import config here to avoid circular imports
+        from linkedin_news_post.config import DB_NAME, COLLECTION_NAME
+        
+        # Use provided values or defaults from config
+        db_name = db_name or DB_NAME
+        collection_name = collection_name or COLLECTION_NAME
+        
         self._client = pymongo.MongoClient(mongo_url)
         self._db = self._client[db_name]
         self._collection = self._db[collection_name]
@@ -139,7 +146,8 @@ class MongoDBBaseStore(BaseStore):
         if doc is None:
             return None
         if refresh_ttl and self._ttl_support and doc.get("expiration"):
-            new_exp = self._compute_expiration(10)
+            from linkedin_news_post.config import DEFAULT_TTL_MINUTES
+            new_exp = self._compute_expiration(DEFAULT_TTL_MINUTES)
             self._collection.update_one(q, {"$set": {"expiration": new_exp}})
             doc["expiration"] = new_exp
         return Item(
@@ -156,10 +164,16 @@ class MongoDBBaseStore(BaseStore):
         *,
         query: Optional[str] = None,
         filter: Optional[Dict[str, Any]] = None,
-        limit: int = 10,
+        limit: int = None,
         offset: int = 0,
         refresh_ttl: Optional[bool] = None,
     ) -> List[SearchItem]:
+        # Import config here to avoid circular imports
+        from linkedin_news_post.config import DEFAULT_SEARCH_LIMIT
+        
+        # Use provided limit or default from config
+        limit = limit or DEFAULT_SEARCH_LIMIT
+        
         results: List[SearchItem] = []
         if self.semantic_enabled:
             # Always use semantic (vector) search when enabled
@@ -206,7 +220,8 @@ class MongoDBBaseStore(BaseStore):
             seen_keys = set()
             for doc in docs:
                 if refresh_ttl and self._ttl_support and doc.get("expiration"):
-                    new_exp = self._compute_expiration(10)
+                    from linkedin_news_post.config import DEFAULT_TTL_MINUTES
+                    new_exp = self._compute_expiration(DEFAULT_TTL_MINUTES)
                     self._collection.update_one(
                         {"_id": doc["_id"]}, {"$set": {"expiration": new_exp}}
                     )
@@ -344,9 +359,15 @@ class MongoDBBaseStore(BaseStore):
         prefix: Optional[Tuple[str, ...]] = None,
         suffix: Optional[Tuple[str, ...]] = None,
         max_depth: Optional[int] = None,
-        limit: int = 100,
+        limit: int = None,
         offset: int = 0,
     ) -> List[Tuple[str, ...]]:
+        # Import config here to avoid circular imports
+        from linkedin_news_post.config import DEFAULT_MAX_LIST_LIMIT
+        
+        # Use provided limit or default from config
+        limit = limit or DEFAULT_MAX_LIST_LIMIT
+        
         q: Dict[str, Any] = {}
         if prefix:
             q.update(self._namespace_prefix_query(prefix))
@@ -425,10 +446,16 @@ class MongoDBBaseStore(BaseStore):
         *,
         query: Optional[str] = None,
         filter: Optional[Dict[str, Any]] = None,
-        limit: int = 10,
+        limit: int = None,
         offset: int = 0,
         refresh_ttl: Optional[bool] = None,
     ) -> List[SearchItem]:
+        # Import config here to avoid circular imports
+        from linkedin_news_post.config import DEFAULT_SEARCH_LIMIT
+        
+        # Use provided limit or default from config
+        limit = limit or DEFAULT_SEARCH_LIMIT
+        
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,
@@ -467,9 +494,15 @@ class MongoDBBaseStore(BaseStore):
         prefix: Optional[Tuple[str, ...]] = None,
         suffix: Optional[Tuple[str, ...]] = None,
         max_depth: Optional[int] = None,
-        limit: int = 100,
+        limit: int = None,
         offset: int = 0,
     ) -> List[Tuple[str, ...]]:
+        # Import config here to avoid circular imports
+        from linkedin_news_post.config import DEFAULT_MAX_LIST_LIMIT
+        
+        # Use provided limit or default from config
+        limit = limit or DEFAULT_MAX_LIST_LIMIT
+        
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,

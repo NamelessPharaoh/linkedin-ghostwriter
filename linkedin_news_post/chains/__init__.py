@@ -4,4 +4,3 @@ from .researcher_chain import researcher_chain
 from .supervisor_chain import supervisor_chain
 from .quality_chain import quality_chain
 from .publisher_chain import publisher_chain
-

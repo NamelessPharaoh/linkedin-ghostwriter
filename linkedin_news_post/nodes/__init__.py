@@ -4,5 +4,3 @@ from .publisher_node import publisher_node
 from .researcher_node import researcher_node
 from .supervisor_node import supervisor_node
 from .quality_node import quality_node
-
-
